@@ -26,6 +26,8 @@
 
       --border: rgba(15, 23, 42, .10);
       --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --shadow-lg: 0 20px 50px rgba(2, 6, 23, .15);
+      --shadow-glass: 0 8px 32px rgba(31, 38, 135, .15);
       --radius: 16px;
 
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
@@ -49,9 +51,11 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      backdrop-filter: blur(10px);
-      background: rgba(244, 246, 251, .78);
-      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      background: rgba(244, 246, 251, .85);
+      border-bottom: 1px solid rgba(255, 255, 255, .30);
+      box-shadow: var(--shadow-glass);
     }
 
     .topbar {
@@ -145,7 +149,9 @@
       padding: 9px 11px;
       font-weight: 700;
       font-size: 13px;
-      transition: transform .05s ease-in-out, filter .2s, background .2s, border-color .2s;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     button:active {
@@ -153,37 +159,53 @@
     }
 
     button:hover {
-      filter: brightness(1.02);
+      filter: brightness(1.08);
+      transform: translateY(-1px);
     }
 
     .primary {
       background: linear-gradient(135deg, rgba(47, 124, 255, .95), rgba(0, 194, 255, .75));
       color: #061021;
-      box-shadow: var(--shadow);
+      box-shadow: 0 10px 30px rgba(47, 124, 255, .30);
+    }
+
+    .primary:hover {
+      box-shadow: 0 15px 40px rgba(47, 124, 255, .40);
     }
 
     .secondary {
-      background: rgba(255, 255, 255, .92);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, .40);
       color: var(--text);
       font-weight: 650;
-      box-shadow: 0 6px 18px rgba(2, 6, 23, .05);
+      box-shadow: 0 8px 25px rgba(2, 6, 23, .08);
+    }
+
+    .secondary:hover {
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 12px 35px rgba(2, 6, 23, .12);
     }
 
     .danger-btn {
-      background: rgba(239, 68, 68, .08);
-      border: 1px solid rgba(239, 68, 68, .25);
+      background: rgba(239, 68, 68, .12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(239, 68, 68, .35);
       color: #991b1b;
-      box-shadow: none;
+      box-shadow: 0 8px 25px rgba(239, 68, 68, .10);
     }
 
     .segmented {
       display: flex;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255, 255, 255, .35);
       border-radius: 14px;
       overflow: hidden;
-      background: rgba(255, 255, 255, .9);
-      box-shadow: 0 6px 18px rgba(2, 6, 23, .05);
+      background: rgba(255, 255, 255, .95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 25px rgba(2, 6, 23, .08);
     }
 
     .segmented button {
@@ -264,26 +286,33 @@
     }
 
     .ws-item {
-      padding: 10px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(15, 23, 42, .10);
-      background: rgba(248, 250, 252, .9);
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1.5px solid rgba(255, 255, 255, .35);
+      background: rgba(255, 255, 255, .92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      transition: outline .08s ease-in-out, border-color .08s, background .15s;
+      justify-content: flex-start;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 20px rgba(2, 6, 23, .06);
+      position: relative;
     }
 
     .ws-item:hover {
-      background: rgba(2, 6, 23, .03);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 10px 30px rgba(2, 6, 23, .10);
+      transform: translateX(2px);
     }
 
     .ws-item .name {
       font-size: 13px;
       font-weight: 800;
       line-height: 1.2;
+      flex: 1;
     }
 
     .ws-item small {
@@ -292,20 +321,24 @@
     }
 
     .ws-item.active {
-      border-color: rgba(47, 124, 255, .55);
-      box-shadow: 0 0 0 2px rgba(47, 124, 255, .10) inset;
-      background: rgba(47, 124, 255, .08);
+      border-color: rgba(47, 124, 255, .70);
+      box-shadow: 0 10px 40px rgba(47, 124, 255, .30);
+      background: linear-gradient(135deg, rgba(47, 124, 255, .15), rgba(0, 194, 255, .10));
     }
 
     .ws-item .dot {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, .18);
+      background: rgba(15, 23, 42, .15);
+      flex-shrink: 0;
+      transition: all 0.3s ease;
     }
 
     .ws-item.active .dot {
-      background: rgba(47, 124, 255, .95);
+      background: #2f7cff;
+      box-shadow: 0 0 12px rgba(47, 124, 255, .60);
+      transform: scale(1.1);
     }
 
     .ws-item.drop-highlight {
@@ -334,11 +367,18 @@
 
     /* ===== Content ===== */
     .panel {
-      background: rgba(255, 255, 255, .95);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .97);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, .40);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-lg);
       overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .panel:hover {
+      box-shadow: 0 20px 50px rgba(2, 6, 23, .12);
     }
 
     .panel .hd {
@@ -347,8 +387,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(2, 6, 23, .03), transparent);
+      border-bottom: 1px solid rgba(255, 255, 255, .30);
+      background: linear-gradient(180deg, rgba(2, 6, 23, .04), transparent);
     }
 
     .panel .hd .title {
@@ -410,13 +450,21 @@
     }
 
     .col {
-      background: rgba(248, 250, 252, .85);
-      border: 1px dashed rgba(15, 23, 42, .14);
+      background: rgba(248, 250, 252, .95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, .35);
       border-radius: var(--radius);
       min-height: 280px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: 0 10px 35px rgba(2, 6, 23, .08);
+      transition: all 0.3s ease;
+    }
+
+    .col:hover {
+      box-shadow: 0 15px 45px rgba(2, 6, 23, .12);
     }
 
     .col-hd {
@@ -424,9 +472,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      background: rgba(2, 6, 23, .02);
-    }
+      border-bottom: 1px solid rgba(255, 255, 255, .30);
+      background: rgba(2, 6, 23, .04);\n    }
 
     .col-hd .name {
       display: flex;
@@ -446,21 +493,42 @@
     }
 
     .card {
-      background: rgba(255, 255, 255, .96);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .98);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, .40);
       border-radius: 14px;
       padding: 10px;
-      box-shadow: 0 10px 25px rgba(2, 6, 23, .08);
+      box-shadow: var(--shadow-lg);
       cursor: grab;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card:hover {
+      box-shadow: 0 25px 60px rgba(2, 6, 23, .20);
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.99);
     }
 
     .card.overdue {
-      border-color: rgba(239, 68, 68, .30);
-      box-shadow: 0 10px 25px rgba(239, 68, 68, .10);
+      border-color: rgba(239, 68, 68, .40);
+      box-shadow: 0 15px 40px rgba(239, 68, 68, .15);
     }
 
     .card:active {
       cursor: grabbing;
+    }
+
+    .card.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+      box-shadow: 0 30px 60px rgba(2, 6, 23, .25);
+    }
+
+    .card.drag-over {
+      background: rgba(47, 124, 255, .08);
+      border-color: rgba(47, 124, 255, .40);
+      box-shadow: 0 0 30px rgba(47, 124, 255, .20);
     }
 
     .card .row1 {
@@ -580,6 +648,105 @@
     td .muted {
       color: var(--muted);
       font-size: 11px;
+    }
+
+    .all-tasks-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 10px;
+      min-height: 600px;
+    }
+
+    .all-tasks-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .all-col-hd {
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid rgba(47, 124, 255, .15);
+    }
+
+    .all-col-hd .name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .all-col-hd .badge {
+      background: rgba(47, 124, 255, .15);
+      color: #2f7cff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .all-col-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .all-task-card {
+      background: rgba(255, 255, 255, .98);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, .40);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: var(--shadow-lg);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      min-height: auto;
+    }
+
+    .all-task-card:hover {
+      box-shadow: 0 25px 60px rgba(2, 6, 23, .20);
+      transform: translateY(-4px);
+    }
+
+    .all-task-card .id-badge {
+      display: inline-block;
+      background: rgba(47, 124, 255, .15);
+      color: #2f7cff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .all-task-card .title {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .all-task-card .workspace {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .all-task-card .status-badge {
+      display: inline-block;
+      background: rgba(47, 124, 255, .08);
+      border: 1px solid rgba(47, 124, 255, .30);
+      color: #2f7cff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
     }
 
     .table-actions {
@@ -1094,6 +1261,7 @@
         <div class="segmented" title="Cambiar vista">
           <button id="btnViewBoard" class="active" type="button">Tablero</button>
           <button id="btnViewTable" type="button">Tabla</button>
+          <button id="btnViewAll" type="button">Todas</button>
         </div>
 
         <div class="search" title="Buscar por ID, nombre, responsable, descripción o campos personalizados">
@@ -1115,9 +1283,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sb-hd">
-        <strong>Espacios</strong>
-        <button id="btnConfig" class="secondary mini" type="button" title="Configuración"
-          style="padding: 6px 10px; font-size: 16px;">⚙️</button>
+        <strong style="font-size: 18px; letter-spacing: 0.3px;">Espacios</strong>
       </div>
       <div class="sb-bd">
         <div class="ws-list" id="wsList"></div>
@@ -1127,11 +1293,11 @@
             <span>Estadísticas</span>
             <span class="badge" id="sbCounts">—</span>
           </div>
+          <button id="btnConfig" class="secondary mini" type="button" title="Configuración"
+            style="padding: 6px 10px; font-size: 13px; width: 100%; margin-top: 8px; justify-content: flex-start;">⚙️ Configuración</button>
         </div>
 
         <div class="small-note" style="opacity:.85;">
-          Tip: arrastra una tarea y suéltala sobre otro espacio para moverla. También puedes soltar archivos sobre una
-          tarea para adjuntarlos.
         </div>
       </div>
     </aside>
@@ -1194,6 +1360,13 @@
           </div>
           <div class="small-note" style="margin-top:10px; opacity:.9;">
             Tip: doble click sobre una fila para editar la tarea.
+          </div>
+        </div>
+
+        <div id="viewAll" class="hidden">
+          <div class="all-tasks-grid" id="allTasksGrid"></div>
+          <div class="small-note" style="margin-top:10px; opacity:.9;">
+            Todas las tareas de todos los espacios
           </div>
         </div>
       </div>
@@ -1718,7 +1891,8 @@
         responsables: [],
         tasks: [],
         currentWorkspaceId: 0,
-        customFields: [] // Nuevo: almacena los campos personalizados
+        customFields: [], // Nuevo: almacena los campos personalizados
+        changelog: [] // Nuevo: historial de cambios de tareas
       };
 
       // Header controls
@@ -1927,6 +2101,7 @@
       function wireUI() {
         btnViewBoard.addEventListener("click", () => setView("board"));
         btnViewTable.addEventListener("click", () => setView("table"));
+        btnViewAll.addEventListener("click", () => setView("all"));
 
         searchEl.addEventListener("input", renderAll);
         sortByEl.addEventListener("change", renderAll);
@@ -2267,15 +2442,28 @@
         if (which === "board") {
           viewBoard.classList.remove("hidden");
           viewTable.classList.add("hidden");
+          viewAll.classList.add("hidden");
           btnViewBoard.classList.add("active");
           btnViewTable.classList.remove("active");
+          btnViewAll.classList.remove("active");
           viewTitle.textContent = "Vista: Tablero";
-        } else {
+        } else if (which === "table") {
           viewTable.classList.remove("hidden");
           viewBoard.classList.add("hidden");
+          viewAll.classList.add("hidden");
           btnViewTable.classList.add("active");
           btnViewBoard.classList.remove("active");
+          btnViewAll.classList.remove("active");
           viewTitle.textContent = "Vista: Tabla";
+        } else if (which === "all") {
+          viewAll.classList.remove("hidden");
+          viewBoard.classList.add("hidden");
+          viewTable.classList.add("hidden");
+          btnViewAll.classList.add("active");
+          btnViewBoard.classList.remove("active");
+          btnViewTable.classList.remove("active");
+          viewTitle.textContent = "Vista: Todas las tareas";
+          renderAllTasks();
         }
       }
 
@@ -2293,11 +2481,10 @@
           const div = document.createElement("div");
           div.className = "ws-item" + (ws.id === state.currentWorkspaceId ? " active" : "");
           div.innerHTML = `
-  <div style="display:flex; flex-direction:column; gap:3px;">
-    <div class="name">${escapeHtml(ws.nombre)}</div>
-    <small>ID ${ws.id}</small>
-  </div>
   <div class="dot"></div>
+  <div style="display:flex; flex-direction:column; gap:3px; flex: 1;">
+    <div class="name">${escapeHtml(ws.nombre)}</div>
+  </div>
   `;
 
           div.addEventListener("click", () => {
@@ -2316,7 +2503,13 @@
             div.classList.remove("drop-highlight");
             const id = ev.dataTransfer.getData("text/plain");
             if (!id) return;
-            await moveTaskToWorkspace(id, ws.id);
+            const taskId = parseInt(id, 10);
+            if (isNaN(taskId)) {
+              console.error("ID de tarea inválido:", id);
+              return;
+            }
+            console.log("Moviendo tarea", taskId, "a workspace", ws.id);
+            await moveTaskToWorkspace(taskId, ws.id);
           });
 
           wsList.appendChild(div);
@@ -3265,6 +3458,7 @@
         renderOverdueBadge();
         renderBoard(filtered);
         renderTable(filtered);
+        renderAllTasks();
       }
 
       function renderWorkspaceBadge() {
@@ -3357,7 +3551,13 @@
             dz.style.outline = "none";
             const id = ev.dataTransfer.getData("text/plain");
             if (!id) return;
-            await moveTaskToStatus(id, status);
+            const taskId = parseInt(id, 10);
+            if (isNaN(taskId)) {
+              console.error("ID de tarea inválido:", id);
+              return;
+            }
+            console.log("Moviendo tarea", taskId, "a estado", status);
+            await moveTaskToStatus(taskId, status);
           });
 
           const colTasks = tasks.filter(t => t.estado === status);
@@ -3409,6 +3609,11 @@
         card.addEventListener("dragstart", (ev) => {
           ev.dataTransfer.setData("text/plain", String(t.id));
           ev.dataTransfer.effectAllowed = "move";
+          card.style.opacity = "0.6";
+          console.log("Iniciando arrastre de tarea", t.id);
+        });
+        card.addEventListener("dragend", (ev) => {
+          card.style.opacity = "1";
         });
 
         // drop de archivos sobre tarjeta
@@ -3488,6 +3693,10 @@
           <button class="secondary mini" data-act="notify" type="button">Notificar</button>
         </div>
         `;
+        
+        // Agregar data-id y data-status para debugging y tracking
+        card.dataset.id = String(t.id);
+        card.dataset.status = t.estado;
 
         const closeBtn = card.querySelector('[data-act="close"]');
         if (closeBtn) closeBtn.addEventListener("click", (e) => { e.stopPropagation(); quickClose(t.id); });
@@ -3552,6 +3761,70 @@
           });
 
           tbody.appendChild(tr);
+        }
+      }
+
+      function renderAllTasks() {
+        const allTasksGrid = document.getElementById("allTasksGrid");
+        allTasksGrid.innerHTML = "";
+
+        // Get all tasks sorted by creation date (newest first)
+        const allTasks = [...(state.tasks || [])].sort((a, b) => {
+          const dateA = new Date(a.creada || 0).getTime();
+          const dateB = new Date(b.creada || 0).getTime();
+          return dateB - dateA;
+        });
+
+        if (allTasks.length === 0) {
+          allTasksGrid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted);">No hay tareas para mostrar</div>`;
+          return;
+        }
+
+        // Create columns for each status
+        for (const status of STATUSES) {
+          const col = document.createElement("div");
+          col.className = "all-tasks-col";
+          col.dataset.status = status;
+
+          const hd = document.createElement("div");
+          hd.className = "all-col-hd";
+          const statusTasks = allTasks.filter(t => t.estado === status);
+          hd.innerHTML = `<div class="name">${escapeHtml(status)} <span class="badge">${statusTasks.length}</span></div>`;
+          col.appendChild(hd);
+
+          const tasksContainer = document.createElement("div");
+          tasksContainer.className = "all-col-tasks";
+
+          for (const task of statusTasks) {
+            const wsName = workspaceNameById(task.workspace_id);
+            const cardHtml = `
+              <div class="all-task-card" data-id="${task.id}" data-status="${escapeHtml(task.estado)}">
+                <div class="id-badge">#${task.id}</div>
+                <div class="title">${escapeHtml(task.nombre)}</div>
+                <div class="workspace" style="color: var(--muted); font-size: 12px; margin-bottom: 8px;">📁 ${escapeHtml(wsName || "Sin espacio")}</div>
+                ${task.descripcion ? `<div style="font-size: 12px; color: var(--text); margin-bottom: 8px; line-height: 1.4; max-height: 60px; overflow: hidden;">${escapeHtml(task.descripcion)}</div>` : ""}
+                <div style="font-size: 11px; color: var(--muted); margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(0,0,0,.05);">
+                  ${task.fechaTermino ? `<div style="margin-bottom: 4px;">⏰ ${escapeHtml(normalizeDueString(task.fechaTermino))}</div>` : ""}
+                  <div>📅 ${fmtDateTimeCL(task.creada)}</div>
+                </div>
+              </div>
+            `;
+
+            const div = document.createElement("div");
+            div.innerHTML = cardHtml;
+            const card = div.firstElementChild;
+
+            // Event listeners
+            card.addEventListener("dblclick", () => openEdit(task.id));
+            card.addEventListener("click", (e) => {
+              e.stopPropagation();
+            });
+
+            tasksContainer.appendChild(card);
+          }
+
+          col.appendChild(tasksContainer);
+          allTasksGrid.appendChild(col);
         }
       }
 
@@ -3783,12 +4056,44 @@
       }
 
       async function moveTaskToWorkspace(taskId, targetWorkspaceId) {
-        const t = state.tasks.find(x => x.id === taskId);
-        if (!t) return;
-        if (String(t.workspaceId) === String(targetWorkspaceId)) return;
+        // taskId es número, targetWorkspaceId puede ser número o UUID string
+        const tId = Number(taskId);
+        
+        console.log("moveTaskToWorkspace: tId=", tId, "targetWorkspaceId=", targetWorkspaceId);
+        
+        if (isNaN(tId)) {
+          console.error("ID de tarea inválido:", taskId);
+          return;
+        }
+        
+        const t = state.tasks.find(x => x.id === tId);
+        if (!t) {
+          console.error("Tarea no encontrada:", tId);
+          return;
+        }
+        
+        // Comparar workspaceId como strings (puede ser UUID o número como string)
+        const wsId = String(targetWorkspaceId);
+        const currentWsId = String(t.workspaceId);
+        
+        if (currentWsId === wsId) {
+          console.log("Tarea ya en este workspace");
+          return;
+        }
+        
+        const ws = state.workspaces.find(x => String(x.id) === wsId);
+        if (!ws) {
+          console.error("Workspace no encontrado:", wsId);
+          return;
+        }
+        
+        // Pedir confirmación si la tarea está cerrada
+        if (t.estado === "Cerrada") {
+          if (!confirm(`¿Mover tarea cerrada "#${t.id}" a "${ws.nombre}"?`)) return;
+        }
 
         const nowIso = new Date().toISOString();
-        const updated = { ...t, workspaceId: targetWorkspaceId, modificada: nowIso };
+        const updated = { ...t, workspaceId: wsId, modificada: nowIso };
 
         try {
           const res = await gs("upsertTarea", updated);
@@ -3799,6 +4104,12 @@
           const saved = res.data;
           saved.adjuntos = Array.isArray(saved.adjuntos) ? saved.adjuntos : (t.adjuntos || []);
           state.tasks = state.tasks.map(x => x.id === saved.id ? saved : x);
+          
+          // Registrar cambio en historial
+          const oldWsName = workspaceNameById(t.workspaceId);
+          logChange(tId, "workspace", t.workspaceId, wsId, `${oldWsName} → ${ws.nombre}`);
+          
+          console.log("Tarea movida a workspace", ws.nombre);
           renderAll();
           renderSidebar();
         } catch (err) {
@@ -3806,9 +4117,53 @@
         }
       }
 
+      // Función para registrar cambios en el historial
+      function logChange(taskId, changeType, oldValue, newValue, details = "") {
+        const entry = {
+          id: Date.now(),
+          taskId: taskId,
+          type: changeType, // "status", "workspace", "other"
+          oldValue: oldValue,
+          newValue: newValue,
+          timestamp: new Date().toISOString(),
+          details: details
+        };
+        state.changelog.push(entry);
+        console.log("📝 Cambio registrado:", entry);
+        // Mantener solo los últimos 500 cambios
+        if (state.changelog.length > 500) {
+          state.changelog = state.changelog.slice(-500);
+        }
+      }
+
       async function moveTaskToStatus(id, status) {
-        const t = state.tasks.find(x => x.id === id);
-        if (!t || t.estado === status) return;
+        const tId = Number(id);
+        console.log("moveTaskToStatus: tId=", tId, "status=", status);
+        
+        if (isNaN(tId)) {
+          console.error("ID inválido:", id);
+          return;
+        }
+        
+        const t = state.tasks.find(x => x.id === tId);
+        if (!t) {
+          console.error("Tarea no encontrada:", tId);
+          return;
+        }
+        if (t.estado === status) {
+          console.log("Tarea ya tiene este estado");
+          return;
+        }
+        
+        if (!STATUSES.includes(status)) {
+          console.error("Estado inválido:", status);
+          return;
+        }
+        
+        // Pedir confirmación si la tarea es crítica (Cerrada o cambio importante)
+        if (t.estado === "Cerrada" || (t.estado !== "Por Hacer" && status !== "Por Hacer")) {
+          if (!confirm(`Cambiar "#${t.id}" de "${t.estado}" a "${status}"?`)) return;
+        }
 
         const nowIso = new Date().toISOString();
         const prev = t.estado;
@@ -3826,6 +4181,11 @@
           const saved = res.data;
           saved.adjuntos = Array.isArray(saved.adjuntos) ? saved.adjuntos : (t.adjuntos || []);
           state.tasks = state.tasks.map(x => x.id === saved.id ? saved : x);
+          
+          // Registrar cambio en historial
+          logChange(tId, "status", prev, status, `${prev} → ${status}`);
+          
+          console.log("Tarea movida a estado", status);
           renderAll();
         } catch (err) {
           alert("Error: " + (err?.message || err));
@@ -4298,9 +4658,10 @@
             let customFields = [];
             try {
               const { data, error: cfErr } = await _supabase.from('custom_fields').select('*').order('order');
-              if (!cfErr) customFields = data || [];
+              if (!cfErr && data) customFields = data;
             } catch (err) {
-              console.error("Error trayendo custom_fields:", err);
+              // Silenciosamente ignorar errores de custom_fields (tabla opcional)
+              // console.error("Error trayendo custom_fields:", err);
             }
 
             return {
