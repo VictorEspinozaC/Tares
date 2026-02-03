@@ -1891,6 +1891,7 @@
         responsables: [],
         tasks: [],
         currentWorkspaceId: 0,
+        currentView: "board", // Rastrear la vista actual (board, table, all)
         customFields: [], // Nuevo: almacena los campos personalizados
         changelog: [] // Nuevo: historial de cambios de tareas
       };
@@ -2439,6 +2440,7 @@
       }
 
       function setView(which) {
+        state.currentView = which; // Rastrear la vista actual
         if (which === "board") {
           viewBoard.classList.remove("hidden");
           viewTable.classList.add("hidden");
@@ -4295,8 +4297,17 @@
           return;
         }
 
-        const rows = getFilteredTasks();
-        const wsName = workspaceNameById(state.currentWorkspaceId);
+        // Si estamos en la vista "Todas", exportar todas las tareas
+        // De lo contrario, exportar solo las tareas del workspace actual
+        let rows;
+        let wsName;
+        if (state.currentView === "all") {
+          rows = state.tasks; // Todas las tareas sin filtrar
+          wsName = "Todas";
+        } else {
+          rows = getFilteredTasks();
+          wsName = workspaceNameById(state.currentWorkspaceId);
+        }
 
         const headers = [
           "ID",
@@ -4328,9 +4339,12 @@
             ? t.adjuntos.map(a => `${a.name}: ${a.url}`).join("\n")
             : "";
 
+          // Si estamos en vista "all", obtener el workspace de cada tarea, si no usar wsName
+          const taskWsName = (state.currentView === "all") ? workspaceNameById(t.workspaceId) : wsName;
+
           const rowData = [
             t.id || "",
-            wsName || "",
+            taskWsName || "",
             t.nombre || "",
             t.descripcion || "",
             responsibleDisplay(t) || "",
