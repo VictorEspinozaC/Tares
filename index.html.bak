@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tablero Tareas</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="txt">
+          <strong>Tablero Tareas</strong>
+          <span>Workspaces · Victor Espinoza Concha</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="segmented" title="Cambiar vista">
+          <button id="btnViewBoard" class="active" type="button">Tablero</button>
+          <button id="btnViewTable" type="button">Tabla</button>
+          <button id="btnViewAll" type="button">Todas</button>
+        </div>
+
+        <div class="search" title="Buscar por ID, nombre, responsable, descripción o campos personalizados">
+          <span style="color:var(--muted); font-weight:900;">⌕</span>
+          <input id="search" type="text" placeholder="Buscar tarea o campos personalizados…" />
+          <span class="hint">Ctrl + K</span>
+        </div>
+
+        <button id="btnOverdue" class="secondary" type="button">Vencidas <span id="overdueCount" class="badge danger"
+            style="margin-left:6px;">0</span></button>
+
+        <button id="btnNewTask" class="primary" type="button">+ Crear tarea</button>
+        <button id="btnExport" class="secondary" type="button">Exportar Excel</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sb-hd">
+        <strong style="font-size: 18px; letter-spacing: 0.3px;">Espacios</strong>
+      </div>
+      <div class="sb-bd">
+        <div class="ws-list" id="wsList"></div>
+
+        <div class="sb-section">
+          <div class="title">
+            <span>Estadísticas</span>
+            <span class="badge" id="sbCounts">—</span>
+          </div>
+          <button id="btnConfig" class="secondary mini" type="button" title="Configuración"
+            style="padding: 6px 10px; font-size: 13px; width: 100%; margin-top: 8px; justify-content: flex-start;">⚙️ Configuración</button>
+        </div>
+
+        <div class="small-note" style="opacity:.85;">
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <section class="panel">
+      <div class="hd">
+        <div class="title">
+          <strong id="viewTitle">Vista: Tablero</strong>
+          <span id="stats" class="badge">Cargando…</span>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span class="badge" id="wsBadge">Espacio: —</span>
+          <label style="min-width:240px;">
+            Ordenar por
+            <select id="sortBy">
+              <option value="id_desc">ID (desc)</option>
+              <option value="id_asc">ID (asc)</option>
+              <option value="created_desc">Creación (desc)</option>
+              <option value="created_asc">Creación (asc)</option>
+              <option value="updated_desc">Modificación (desc)</option>
+              <option value="updated_asc">Modificación (asc)</option>
+              <option value="due_asc">Término (asc)</option>
+              <option value="due_desc">Término (desc)</option>
+              <option value="status_asc">Estado (A→Z)</option>
+              <option value="resp_asc">Responsable (A→Z)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="bd">
+        <div id="viewBoard">
+          <div class="board" id="boardEl"></div>
+        </div>
+
+        <div id="viewTable" class="hidden">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Espacio de trabajo</th>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Responsable</th>
+                  <th>Estado</th>
+                  <th>Creación</th>
+                  <th>Revisión/Modificación</th>
+                  <th>Fecha término</th>
+                  <th>Fecha cierre</th>
+                  <th>Adjuntos</th>
+                  <th>Campos Personalizados</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="small-note" style="margin-top:10px; opacity:.9;">
+            Tip: doble click sobre una fila para editar la tarea.
+          </div>
+        </div>
+
+        <div id="viewAll" class="hidden">
+          <div class="all-tasks-grid" id="allTasksGrid"></div>
+          <div class="small-note" style="margin-top:10px; opacity:.9;">
+            Todas las tareas de todos los espacios
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== MODAL TAREA ===== -->
+  <div id="taskBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <div class="dlg-hd">
+        <div>
+          <strong id="dlgTitle">Crear tarea</strong>
+          <div class="small-note" id="dlgSub"></div>
+        </div>
+        <button class="secondary mini" id="btnCloseTask" type="button">Cerrar</button>
+      </div>
+
+      <form id="taskForm">
+        <div class="dlg-bd">
+          <div class="form-row">
+            <label>
+              Nombre de la tarea *
+              <input id="f_name" type="text" required maxlength="120" />
+            </label>
+
+            <label>
+              Responsable (correo)
+              <select id="f_resp"></select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>
+              Estado
+              <select id="f_status">
+                <option value="Pendiente">Pendiente</option>
+                <option value="En Progreso">En Progreso</option>
+                <option value="Revisión">Revisión</option>
+                <option value="Cerrada">Cerrada</option>
+              </select>
+            </label>
+
+            <label>
+              Espacio de trabajo
+              <select id="f_wsSelect"></select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>
+              Fecha término (DD-MM-YYYY HH:mm)
+              <div class="due-inline">
+                <input id="f_dueDateDisplay" type="text" readonly placeholder="DD-MM-YYYY HH:mm" />
+                <button id="btnDueOpen" class="secondary cal-btn" type="button" title="Abrir calendario">📅</button>
+              </div>
+              <input id="f_dueDate" type="hidden" />
+            </label>
+
+            <label>
+              Fecha cierre (auto al cerrar)
+              <input id="f_closedAt" type="text" disabled />
+            </label>
+          </div>
+
+          <!-- ===== CAMPOS PERSONALIZADOS en Modal Tarea ===== -->
+          <div class="custom-fields-section">
+            <div class="custom-fields-header">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <strong style="font-size:13px;">Campos Personalizados</strong>
+                <span class="badge" id="customFieldsCount">0</span>
+              </div>
+            </div>
+
+            <div class="small-note" id="noCustomFieldsMsg">No hay campos personalizados configurados. Ve a "Campos
+              Personalizados" en la barra lateral para crear algunos.</div>
+
+            <div id="customFieldsContainer"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="checkline">
+              <input id="f_notifyOnSave" type="checkbox" />
+              <span>Notificar al guardar (abre Outlook)</span>
+            </div>
+            <div class="small-note" style="opacity:.9;">
+              Abre un correo listo para enviar usando el cliente predeterminado (MAILTO).
+            </div>
+          </div>
+
+          <label>
+            Descripción de la tarea
+            <textarea id="f_desc" placeholder="Detalles, contexto, links…"></textarea>
+          </label>
+
+          <!-- ===== Adjuntos ===== -->
+          <div class="attach-box">
+            <div class="attach-actions">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <strong style="font-size:13px;">Adjuntos</strong>
+                <span class="badge" id="attachCount">0</span>
+              </div>
+            </div>
+
+            <div class="small-note">Puedes adjuntar varios archivos. Se guardan en Supabase Storage (bucket:
+              task-attachments). También puedes soltar archivos sobre una tarea en el tablero.</div>
+
+            <div class="form-row">
+              <label style="grid-column: 1 / -1;">
+                Agregar archivos (múltiples)
+                <input id="f_files" type="file" multiple />
+              </label>
+            </div>
+
+            <div class="small-note" id="filePendingInfo"></div>
+
+            <div class="attach-list" id="attachList"></div>
+          </div>
+
+          <div class="small-note" id="f_meta"></div>
+        </div>
+
+        <div class="dlg-ft">
+          <button type="button" id="btnDeleteTask" class="secondary danger-btn"
+            style="margin-right:auto;">Eliminar</button>
+          <button type="button" class="secondary" id="btnCancelTask">Cancelar</button>
+          <button type="submit" class="primary" id="btnSaveTask">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL RESPONSABLES ===== -->
+  <div id="respBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="respTitle">
+      <div class="dlg-hd">
+        <div>
+          <strong id="respTitle">Responsables</strong>
+          <div class="small-note">Crea, edita o desactiva responsables.</div>
+        </div>
+        <button class="secondary mini" id="btnCloseResp" type="button">Cerrar</button>
+      </div>
+
+      <div class="dlg-bd" style="display:grid; gap:12px;">
+        <div class="form-row">
+          <label>
+            Nombre
+            <input id="r_name" type="text" maxlength="120" placeholder="Nombre y apellido" />
+          </label>
+          <label>
+            Email
+            <input id="r_email" type="email" placeholder="correo@dominio.cl" />
+          </label>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="btnAddResp" class="primary" type="button">Guardar responsable</button>
+          <button id="btnClearResp" class="secondary" type="button">Limpiar</button>
+        </div>
+
+        <div style="overflow:auto;">
+          <table style="width:100%; border-collapse: collapse; min-width: 640px;">
+            <thead>
+              <tr>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Nombre</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Email</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Estado</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="respTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dlg-ft">
+        <button class="secondary" type="button" id="btnRespDone">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL VENCIDAS ===== -->
+  <div id="overdueBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="overdueTitle">
+      <div class="dlg-hd">
+        <div>
+          <strong id="overdueTitle">Tareas vencidas</strong>
+          <div class="small-note">Fecha actual mayor a Fecha término (solo no cerradas).</div>
+        </div>
+        <button class="secondary mini" id="btnCloseOverdue" type="button">Cerrar</button>
+      </div>
+
+      <div class="dlg-bd">
+        <div class="badge danger" id="overdueSummary">—</div>
+
+        <div class="overdue-table-wrap">
+          <table class="overdue-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Espacio</th>
+                <th>Nombre</th>
+                <th>Responsable</th>
+                <th>Fecha término</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="overdueTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dlg-ft">
+        <button class="secondary" type="button" id="btnOverdueGoCurrent">Ver mi espacio actual</button>
+        <button class="primary" type="button" id="btnOverdueRefresh">Actualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL ADMINISTRAR ESPACIOS ===== -->
+  <div id="adminWSBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adminWSTitle">
+      <div class="dlg-hd">
+        <div>
+          <strong id="adminWSTitle">Administrar Espacios de Trabajo</strong>
+          <div class="small-note">Mostrar, ocultar, renombrar o eliminar espacios. Advertencia si tienen tareas activas.
+          </div>
+        </div>
+        <button class="secondary mini" id="btnCloseAdminWS" type="button">Cerrar</button>
+      </div>
+
+      <div class="dlg-bd" style="display:grid; gap:12px;">
+        <div class="attach-box">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <strong style="font-size:13px;">Lista de Espacios</strong>
+            <span class="badge" id="wsAdminCount">Total: 0</span>
+          </div>
+
+          <div class="small-note" style="margin-top:4px;">
+            <strong>Instrucciones:</strong>
+            <ul style="margin:6px 0 0 0; padding-left:18px;">
+              <li><strong>Ocultar:</strong> El espacio no aparecerá en el sidebar pero sus tareas se mantienen</li>
+              <li><strong>Mostrar:</strong> Reactiva un espacio oculto</li>
+              <li><strong>Cambiar nombre:</strong> Doble clic sobre el nombre o usa el botón Editar</li>
+              <li><strong>Eliminar:</strong> Solo disponible si el espacio está vacío (sin tareas)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="overflow:auto; max-height:400px;">
+          <table style="width:100%; border-collapse: collapse; min-width: 800px;">
+            <thead>
+              <tr>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">ID</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Nombre</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Estado</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border);">Tareas Activas</th>
+                <th style="padding:10px; border-bottom:1px solid var(--border); text-align:center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="adminWSTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="attach-box">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <strong style="font-size:13px;">Crear Nuevo Espacio</strong>
+          </div>
+
+          <div class="form-row">
+            <label style="grid-column: 1 / -1;">
+              Nombre del espacio
+              <input id="newWSName" type="text" placeholder="Ej: Marketing Q2" maxlength="100" />
+            </label>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="btnCreateNewWS" class="primary" type="button">Crear Espacio</button>
+            <button id="btnClearNewWS" class="secondary" type="button">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-ft">
+        <div style="display:flex; align-items:center; gap:8px; margin-right:auto;">
+          <span class="badge ok" id="activeWSCount">Activos: 0</span>
+          <span class="badge warn" id="hiddenWSCount">Ocultos: 0</span>
+          <span class="badge" id="tasksInWSCount">Tareas: 0</span>
+        </div>
+        <button class="secondary" type="button" id="btnAdminWSDone">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CONFIRMAR ELIMINAR ESPACIO CON TAREAS ===== -->
+  <div id="confirmDeleteWSBackdrop" class="modal-backdrop">
+    <div class="modal" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteWSTitle">
+      <div class="dlg-hd">
+        <div>
+          <strong id="confirmDeleteWSTitle">⚠️ Confirmar Eliminación</strong>
+          <div class="small-note">El espacio contiene tareas activas</div>
+        </div>
+      </div>
+
+      <div class="dlg-bd">
+        <div
+          style="display:flex; align-items:center; gap:12px; margin-bottom:16px; padding:12px; background:rgba(239,68,68,.06); border-radius:12px; border:1px solid rgba(239,68,68,.2);">
+          <div style="font-size:32px; color:#ef4444;">⚠️</div>
+          <div style="flex:1;">
+            <strong style="color:#991b1b; display:block; margin-bottom:4px;">No se puede eliminar el espacio "<span
+                id="wsToDeleteName"></span>"</strong>
+            <span style="font-size:12px; color:#991b1b;">Contiene <span id="wsToDeleteTaskCount"
+                style="font-weight:bold;">0</span> tarea(s) activa(s).</span>
+          </div>
+        </div>
+
+        <div class="attach-box">
+          <strong style="font-size:13px; display:block; margin-bottom:8px;">Opciones disponibles:</strong>
+          <div style="display:grid; gap:8px;">
+            <label
+              style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; border:1px solid var(--border); cursor:pointer;"
+              for="optionMoveTasks">
+              <input type="radio" id="optionMoveTasks" name="deleteOption" value="move" checked />
+              <div style="flex:1;">
+                <div style="font-weight:bold; font-size:13px;">Mover tareas a otro espacio</div>
+                <div class="small-note">Selecciona un espacio destino para mover todas las tareas</div>
+              </div>
+            </label>
+
+            <label
+              style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; border:1px solid var(--border); cursor:pointer;"
+              for="optionHideWS">
+              <input type="radio" id="optionHideWS" name="deleteOption" value="hide" />
+              <div style="flex:1;">
+                <div style="font-weight:bold; font-size:13px;">Ocultar espacio</div>
+                <div class="small-note">El espacio dejará de mostrarse pero las tareas se mantienen</div>
+              </div>
+            </label>
+
+            <label
+              style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; border:1px solid var(--border); cursor:pointer;"
+              for="optionDeleteAll">
+              <input type="radio" id="optionDeleteAll" name="deleteOption" value="deleteAll" />
+              <div style="flex:1;">
+                <div style="font-weight:bold; font-size:13px; color:#991b1b;">Eliminar espacio y todas sus tareas</div>
+                <div class="small-note" style="color:#991b1b;">⚠️ Eliminará permanentemente <span
+                    id="deleteAllTaskCount">0</span> tarea(s). Esta acción no se puede deshacer.</div>
+              </div>
+            </label>
+          </div>
+
+          <div id="moveTasksSection" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+            <label>
+              Espacio destino para mover las tareas
+              <select id="moveToWSSelect" style="margin-top:6px;"></select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-ft">
+        <button type="button" class="secondary" id="btnCancelDeleteWS">Cancelar</button>
+        <button type="button" class="secondary danger-btn" id="btnConfirmDeleteWS">Proceder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CONFIGURACIÓN ===== -->
+  <div id="configBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="configTitle" style="max-width: 500px;">
+      <div class="dlg-hd">
+        <div>
+          <strong id="configTitle">Configuración</strong>
+          <div class="small-note">Gestiona responsables, espacios y campos personalizados</div>
+        </div>
+        <button class="secondary mini" id="btnCloseConfig" type="button">Cerrar</button>
+      </div>
+
+      <div class="dlg-bd" style="display:grid; gap:12px;">
+        <div class="attach-box">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <button id="btnResponsables" class="secondary" type="button"
+              style="width:100%; padding:12px; text-align:left; display:flex; align-items:center; gap:10px;">
+              <span style="font-size:18px;">👥</span>
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:13px;">Responsables</div>
+                <div class="small-note">Gestiona los responsables de las tareas</div>
+              </div>
+            </button>
+
+            <button id="btnAdminWS" class="secondary" type="button"
+              style="width:100%; padding:12px; text-align:left; display:flex; align-items:center; gap:10px;">
+              <span style="font-size:18px;">📁</span>
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:13px;">Administrar Espacios</div>
+                <div class="small-note">Crea, edita o elimina espacios de trabajo</div>
+              </div>
+            </button>
+
+            <button id="btnManageFields" class="secondary" type="button"
+              style="width:100%; padding:12px; text-align:left; display:flex; align-items:center; gap:10px;">
+              <span style="font-size:18px;">⚙️</span>
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:13px;">Campos Personalizados</div>
+                <div class="small-note">Crea campos adicionales para las tareas</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-ft">
+        <button type="button" class="secondary" id="btnCloseConfig">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL ADMINISTRAR CAMPOS PERSONALIZADOS ===== -->
+  <div id="manageFieldsBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manageFieldsTitle">
+      <div class="dlg-hd">
+        <div>
+          <strong id="manageFieldsTitle">Campos Personalizados</strong>
+          <div class="small-note">Crea y gestiona campos personalizados para las tareas. Se aplican a todas las tareas
+            del sistema.</div>
+        </div>
+        <button class="secondary mini" id="btnCloseManageFields" type="button">Cerrar</button>
+      </div>
+
+      <div class="dlg-bd" style="display:grid; gap:12px;">
+        <div class="attach-box">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <strong style="font-size:13px;">Nuevo Campo Personalizado</strong>
+          </div>
+
+          <div class="form-row">
+            <label>
+              Nombre del campo
+              <input id="newFieldName" type="text" placeholder="Ej: Presupuesto, Prioridad, Sprint" maxlength="50" />
+            </label>
+            <label>
+              Tipo de dato
+              <select id="newFieldType">
+                <option value="text">Texto</option>
+                <option value="number">Número</option>
+                <option value="date">Fecha</option>
+                <option value="priority">Prioridad (Alta, Media, Baja)</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="small-note">
+            <strong>Tipos disponibles:</strong>
+            <ul style="margin:6px 0 0 0; padding-left:18px;">
+              <li><strong>Texto:</strong> Campo de texto libre</li>
+              <li><strong>Número:</strong> Valor numérico (entero o decimal)</li>
+              <li><strong>Fecha:</strong> Fecha con selector de calendario</li>
+              <li><strong>Prioridad:</strong> Selección entre Alta, Media o Baja (con colores)</li>
+            </ul>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="btnAddCustomField" class="primary" type="button">Agregar Campo</button>
+            <button id="btnClearNewField" class="secondary" type="button">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="attach-box">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <strong style="font-size:13px;">Campos Configurados</strong>
+            <span class="badge" id="fieldsCount">Total: 0</span>
+          </div>
+
+          <div class="small-note" style="margin-top:4px;">
+            Los campos se mostrarán en todas las tareas. Puedes reordenarlos arrastrando (próximamente).
+          </div>
+
+          <div id="fieldsConfigContainer">
+            <div class="empty-fields-message" id="emptyFieldsMessage">
+              No hay campos personalizados configurados. Agrega tu primer campo arriba.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-ft">
+        <button class="secondary" type="button" id="btnManageFieldsDone">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    // Configuración de Supabase (debe estar antes de cargar los servicios)
+    const SUPABASE_URL = "https://pjfpeudhtnedmixyhxwwdf.supabase.co";
+    const SUPABASE_KEY = "REDACTED_FOR_SECURITY";
+
+    // Variables globales para servicios
+    let _supabase;
+
+    try {
+      if (typeof supabase !== 'undefined') {
+        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      } else {
+        console.error("Supabase SDK no cargado.");
+      }
+    } catch (e) {
+      console.error("Error inicializando Supabase:", e);
+    }
+  </script>
+
+  <script src="supabase-service.js"></script>
+  <script src="utils.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
