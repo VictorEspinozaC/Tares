@@ -1,3 +1,131 @@
+// ========== TOAST SYSTEM ==========
+function toast(message, type = "info", duration = 4000) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const icons = { success: "\u2705", error: "\u274C", warning: "\u26A0\uFE0F", info: "\u2139\uFE0F" };
+  const titles = { success: "Listo", error: "Error", warning: "Atenci\u00F3n", info: "Info" };
+
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.setAttribute("role", "alert");
+  el.innerHTML = `
+    <span class="toast-icon">${icons[type] || icons.info}</span>
+    <div class="toast-body">
+      <div class="toast-title">${titles[type] || titles.info}</div>
+      <div class="toast-msg">${escapeHtml(message)}</div>
+    </div>
+    <button class="toast-close" aria-label="Cerrar notificaci\u00F3n">&times;</button>
+    <div class="toast-progress" style="width:100%;"></div>
+  `;
+
+  const close = () => {
+    el.classList.add("removing");
+    setTimeout(() => el.remove(), 250);
+  };
+
+  el.querySelector(".toast-close").addEventListener("click", close);
+  el.addEventListener("click", close);
+
+  container.appendChild(el);
+
+  // Progress bar animation
+  const progress = el.querySelector(".toast-progress");
+  requestAnimationFrame(() => {
+    progress.style.transitionDuration = duration + "ms";
+    progress.style.width = "0%";
+  });
+
+  setTimeout(close, duration);
+}
+
+function toastConfirm(message, onConfirm) {
+  const container = document.getElementById("toastContainer");
+  if (!container) { if (confirm(message)) onConfirm(); return; }
+
+  const el = document.createElement("div");
+  el.className = "toast warning";
+  el.setAttribute("role", "alertdialog");
+  el.style.cursor = "default";
+  el.innerHTML = `
+    <span class="toast-icon">\u26A0\uFE0F</span>
+    <div class="toast-body">
+      <div class="toast-title">Confirmar</div>
+      <div class="toast-msg">${escapeHtml(message)}</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="primary mini" data-act="yes" type="button" style="font-size:12px;padding:6px 14px;">S\u00ED</button>
+        <button class="secondary mini" data-act="no" type="button" style="font-size:12px;padding:6px 14px;">No</button>
+      </div>
+    </div>
+  `;
+
+  const close = () => {
+    el.classList.add("removing");
+    setTimeout(() => el.remove(), 250);
+  };
+
+  el.querySelector('[data-act="yes"]').addEventListener("click", () => { close(); onConfirm(); });
+  el.querySelector('[data-act="no"]').addEventListener("click", close);
+  el.addEventListener("click", (e) => { if (e.target === el) return; }); // no auto-close on body click
+
+  container.appendChild(el);
+}
+
+// ========== DARK MODE ==========
+function initTheme() {
+  const saved = localStorage.getItem("tares-theme");
+  if (saved === "dark") {
+    document.documentElement.classList.add("dark");
+  }
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  document.documentElement.classList.toggle("dark");
+  const isDark = document.documentElement.classList.contains("dark");
+  localStorage.setItem("tares-theme", isDark ? "dark" : "light");
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById("btnTheme");
+  if (!btn) return;
+  const isDark = document.documentElement.classList.contains("dark");
+  btn.innerHTML = isDark ? "&#9728;" : "&#9790;";
+  btn.title = isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro";
+}
+
+// ========== SIDEBAR MOBILE ==========
+function initSidebar() {
+  const btn = document.getElementById("btnSidebarToggle");
+  const overlay = document.getElementById("sidebarOverlay");
+  const sidebar = document.querySelector(".sidebar");
+  if (!btn || !sidebar) return;
+
+  btn.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("show");
+  });
+
+  if (overlay) {
+    overlay.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("show");
+    });
+  }
+}
+
+// ========== LOADING SKELETON ==========
+function showSkeleton() {
+  const skeleton = document.getElementById("loadingSkeleton");
+  if (skeleton) skeleton.style.display = "";
+}
+
+function hideSkeleton() {
+  const skeleton = document.getElementById("loadingSkeleton");
+  if (skeleton) skeleton.style.display = "none";
+}
+
 // ========== CONSTANTES ==========
 const STATUSES = ["Pendiente", "En Progreso", "Revisión", "Cerrada"];
 const TZ_CL = "America/Santiago";
@@ -16,7 +144,6 @@ let state = {
   tasks: [],
   currentWorkspaceId: 0,
   currentView: "board",
-  customFields: [],
   customFields: [],
   changelog: [],
   currentUser: null, // { email, role }
@@ -177,6 +304,8 @@ function cacheDOM() {
 // ========== BOOTSTRAP ==========
 async function bootstrap() {
   try {
+    showSkeleton();
+
     // 1. Verificar Sesión (usando getUser para validar token en servidor)
     console.log("Bootstrap: Verifying session...");
     const sessionRes = await gs("authGetUser");
@@ -210,8 +339,7 @@ async function bootstrap() {
     console.log("Bootstrap: Data result:", res);
 
     if (!res || !res.ok) {
-      alert("Error cargando datos: " + (res?.error || "Error desconocido"));
-      // Si falla datos, igual mostramos UI vacía para no bloquear
+      toast("Error cargando datos: " + (res?.error || "Error desconocido"), "error");
     } else {
       state.workspaces = res.workspaces;
       state.responsables = res.responsables;
@@ -226,11 +354,15 @@ async function bootstrap() {
     setupRealtimeSubscriptions();
 
     // Renderizar interfaz inicial
+    hideSkeleton();
     renderAll();
     renderSidebar();
+
+    toast("Tablero cargado correctamente", "success", 2500);
   } catch (err) {
     console.error("Bootstrap error:", err);
-    alert("Error durante inicialización: " + err.message);
+    hideSkeleton();
+    toast("Error durante inicializaci\u00F3n: " + err.message, "error", 8000);
   }
 }
 
@@ -283,7 +415,7 @@ function wireUI() {
     try {
       const res = await gs("deleteTarea", editingId);
       if (!res || !res.ok) {
-        alert("No se pudo eliminar: " + (res?.error || "Error desconocido"));
+        toast("No se pudo eliminar: " + (res?.error || "Error desconocido"), "error");
         return;
       }
 
@@ -291,8 +423,9 @@ function wireUI() {
       closeTaskModal();
       renderAll();
       renderSidebar();
+      toast("Tarea eliminada correctamente", "success");
     } catch (err) {
-      alert("Error eliminando: " + err.message);
+      toast("Error eliminando: " + err.message, "error");
     }
   });
 
@@ -373,7 +506,7 @@ function wireUI() {
       case 'move':
         const targetWsId = Number(dom.moveToWSSelect.value);
         if (!targetWsId || isNaN(targetWsId)) {
-          alert('Selecciona un espacio destino válido');
+          toast('Selecciona un espacio destino válido', "warning");
           return;
         }
         await moveTasksAndDeleteWS(wsToDeleteId, targetWsId);
@@ -450,7 +583,7 @@ async function saveTaskFlow() {
     const nowIso = new Date().toISOString();
     const wsId = Number(dom.f_wsSelect.value) || state.currentWorkspaceId;
     if (!wsId) {
-      alert("Debes seleccionar un espacio de trabajo.");
+      toast("Debes seleccionar un espacio de trabajo.", "warning");
       return;
     }
 
@@ -525,7 +658,7 @@ async function saveTaskFlow() {
 
       const res = await gs("upsertTarea", task);
       if (!res || !res.ok) {
-        alert("No se pudo guardar: " + (res?.error || "Error desconocido"));
+        toast("No se pudo guardar: " + (res?.error || "Error desconocido"), "error");
         return;
       }
 
@@ -571,7 +704,7 @@ async function saveTaskFlow() {
 
       const res = await gs("upsertTarea", task);
       if (!res || !res.ok) {
-        alert("No se pudo guardar: " + (res?.error || "Error desconocido"));
+        toast("No se pudo guardar: " + (res?.error || "Error desconocido"), "error");
         return;
       }
 
@@ -590,7 +723,7 @@ async function saveTaskFlow() {
       renderSidebar();
     }
   } catch (err) {
-    alert("Error guardando: " + (err?.message || err));
+    toast("Error guardando: " + (err?.message || err), "error");
   } finally {
     savingTask = false;
     btn.disabled = false;
@@ -684,9 +817,14 @@ function renderAll() {
   renderStats(filtered);
   renderWorkspaceBadge();
   renderOverdueBadge();
-  renderBoard(filtered);
-  renderTable(filtered);
-  renderAllTasks();
+  // Solo renderizar la vista activa para mejor rendimiento
+  if (state.currentView === "board") {
+    renderBoard(filtered);
+  } else if (state.currentView === "table") {
+    renderTable(filtered);
+  } else if (state.currentView === "all") {
+    renderAllTasks();
+  }
 }
 
 function renderWorkspaceBadge() {
@@ -711,6 +849,7 @@ function getFilteredTasks() {
         });
       }
 
+      return (basicSearch + customFieldsSearch).includes(q);
     });
   }
 
@@ -866,7 +1005,7 @@ function renderCard(t) {
       openEdit(t.id);
       renderAll();
     } catch (err) {
-      alert("Error subiendo adjuntos: " + (err?.message || err));
+      toast("Error subiendo adjuntos: " + (err?.message || err), "error");
     }
   });
 
@@ -1173,7 +1312,7 @@ async function moveTaskToWorkspace(taskId, targetWorkspaceId) {
   try {
     const res = await gs("upsertTarea", updated);
     if (!res || !res.ok) {
-      alert("No se pudo mover la tarea.");
+      toast("No se pudo mover la tarea.", "error");
       return;
     }
     const saved = res.data;
@@ -1185,7 +1324,7 @@ async function moveTaskToWorkspace(taskId, targetWorkspaceId) {
     renderAll();
     renderSidebar();
   } catch (err) {
-    alert("Error moviendo tarea: " + (err?.message || err));
+    toast("Error moviendo tarea: " + (err?.message || err), "error");
   }
 }
 
@@ -1242,7 +1381,7 @@ async function moveTaskToStatus(id, status) {
   try {
     const res = await gs("upsertTarea", updated);
     if (!res || !res.ok) {
-      alert("No se pudo cambiar el estado: " + (res?.error || "Error desconocido"));
+      toast("No se pudo cambiar el estado: " + (res?.error || "Error desconocido"), "error");
       return;
     }
     const saved = res.data;
@@ -1253,7 +1392,7 @@ async function moveTaskToStatus(id, status) {
 
     renderAll();
   } catch (err) {
-    alert("Error: " + (err?.message || err));
+    toast("Error: " + (err?.message || err), "error");
   }
 }
 
@@ -1369,13 +1508,13 @@ async function addCustomField() {
   const type = dom.newFieldType.value;
 
   if (!name) {
-    alert('Ingresa un nombre para el campo');
+    toast('Ingresa un nombre para el campo', "warning");
     dom.newFieldName.focus();
     return;
   }
 
   if (state.customFields.some(f => f.name.toLowerCase() === name.toLowerCase())) {
-    alert('Ya existe un campo con ese nombre');
+    toast('Ya existe un campo con ese nombre', "warning");
     dom.newFieldName.focus();
     return;
   }
@@ -1400,7 +1539,7 @@ async function addCustomField() {
     renderFieldsConfig();
 
   } catch (err) {
-    alert("Error creando campo: " + (err?.message || err));
+    toast("Error creando campo: " + (err?.message || err), "error");
   }
 }
 
@@ -1424,7 +1563,7 @@ async function deleteCustomField(fieldId) {
     renderFieldsConfig();
 
   } catch (err) {
-    alert("Error eliminando campo: " + (err?.message || err));
+    toast("Error eliminando campo: " + (err?.message || err), "error");
   }
 }
 
@@ -1469,7 +1608,7 @@ function renderFieldsConfig() {
     nameInput.addEventListener('change', async () => {
       const newName = nameInput.value.trim();
       if (!newName) {
-        alert('El nombre no puede estar vacío');
+        toast('El nombre no puede estar vacío', "warning");
         nameInput.value = field.name;
         return;
       }
@@ -1477,7 +1616,7 @@ function renderFieldsConfig() {
       if (newName === field.name) return;
 
       if (state.customFields.some(f => f.id !== field.id && f.name.toLowerCase() === newName.toLowerCase())) {
-        alert('Ya existe otro campo con ese nombre');
+        toast('Ya existe otro campo con ese nombre', "warning");
         nameInput.value = field.name;
         return;
       }
@@ -1491,7 +1630,7 @@ function renderFieldsConfig() {
         renderFieldsConfig();
 
       } catch (err) {
-        alert("Error actualizando campo: " + (err?.message || err));
+        toast("Error actualizando campo: " + (err?.message || err), "error");
         nameInput.value = field.name;
       }
     });
@@ -1881,7 +2020,7 @@ function startEditingWSName(wsId, element) {
 
 async function saveWSName(wsId, newName) {
   if (!newName || newName.trim() === '') {
-    alert('El nombre no puede estar vacío');
+    toast('El nombre no puede estar vacío', "warning");
     return;
   }
 
@@ -1917,7 +2056,7 @@ async function saveWSName(wsId, newName) {
     renderWSAdminTable();
 
   } catch (err) {
-    alert("Error actualizando nombre: " + (err?.message || err));
+    toast("Error actualizando nombre: " + (err?.message || err), "error");
   }
 }
 
@@ -1957,14 +2096,14 @@ async function toggleWSVisibility(wsId, isCurrentlyActive) {
     renderAll();
 
   } catch (err) {
-    alert("Error cambiando visibilidad: " + (err?.message || err));
+    toast("Error cambiando visibilidad: " + (err?.message || err), "error");
   }
 }
 
 async function createWSFromAdmin() {
   const name = dom.newWSName.value.trim();
   if (!name) {
-    alert('Ingresa un nombre para el espacio');
+    toast('Ingresa un nombre para el espacio', "warning");
     dom.newWSName.focus();
     return;
   }
@@ -1988,7 +2127,7 @@ async function createWSFromAdmin() {
     renderAll();
 
   } catch (err) {
-    alert("Error creando espacio: " + (err?.message || err));
+    toast("Error creando espacio: " + (err?.message || err), "error");
   }
 }
 
@@ -2074,10 +2213,10 @@ async function deleteWorkspace(wsId) {
     renderSidebar();
     renderAll();
 
-    alert('Espacio eliminado exitosamente');
+    toast('Espacio eliminado exitosamente', "success");
 
   } catch (err) {
-    alert("Error eliminando espacio: " + (err?.message || err));
+    toast("Error eliminando espacio: " + (err?.message || err), "error");
   }
 }
 
@@ -2094,7 +2233,7 @@ async function moveTasksAndDeleteWS(sourceWsId, targetWsId) {
     await deleteWorkspace(sourceWsId);
 
   } catch (err) {
-    alert("Error moviendo tareas: " + (err?.message || err));
+    toast("Error moviendo tareas: " + (err?.message || err), "error");
   }
 }
 
@@ -2114,7 +2253,7 @@ async function deleteWorkspaceWithTasks(wsId) {
     await deleteWorkspace(wsId);
 
   } catch (err) {
-    alert("Error eliminando espacio con tareas: " + (err?.message || err));
+    toast("Error eliminando espacio con tareas: " + (err?.message || err), "error");
   }
 }
 
@@ -2182,8 +2321,8 @@ function renderResponsablesTable() {
 async function saveResponsableFlow() {
   const nombre = (dom.r_name.value || "").trim();
   const email = (dom.r_email.value || "").trim().toLowerCase();
-  if (!nombre) { alert("Nombre requerido."); return; }
-  if (!email) { alert("Email requerido."); return; }
+  if (!nombre) { toast("Nombre requerido.", "warning"); return; }
+  if (!email) { toast("Email requerido.", "warning"); return; }
 
   try {
     const res = await gs("upsertResponsable", { nombre, email, activo: true });
@@ -2200,7 +2339,7 @@ async function saveResponsableFlow() {
 
     renderResponsablesTable();
   } catch (err) {
-    alert("Error guardando responsable: " + (err && err.message ? err.message : err));
+    toast("Error guardando responsable: " + (err && err.message ? err.message : err), "error");
   }
 }
 
@@ -2212,7 +2351,7 @@ async function setRespActive(email, active) {
     if (idx >= 0) state.responsables[idx].activo = !!active;
     renderResponsablesTable();
   } catch (err) {
-    alert("Error actualizando responsable: " + (err && err.message ? err.message : err));
+    toast("Error actualizando responsable: " + (err && err.message ? err.message : err), "error");
   }
 }
 
@@ -2323,14 +2462,14 @@ function renderAttachmentsUI(task) {
 
       try {
         const res = await gs("deleteTaskAttachment", editingId, a.id);
-        if (!res || !res.ok) { alert("No se pudo eliminar adjunto."); return; }
+        if (!res || !res.ok) { toast("No se pudo eliminar adjunto.", "error"); return; }
         const updated = Array.isArray(res.data) ? res.data : [];
         const t = state.tasks.find(x => x.id === editingId);
         if (t) t.adjuntos = updated;
         renderAttachmentsUI(t);
         renderAll();
       } catch (err) {
-        alert("Error eliminando adjunto: " + (err?.message || err));
+        toast("Error eliminando adjunto: " + (err?.message || err), "error");
       }
     });
 
@@ -2351,12 +2490,12 @@ function renderPendingFilesInfo() {
 async function uploadPendingFiles(taskId) {
   const totalBytes = pendingFiles.reduce((s, f) => s + (f.size || 0), 0);
   if (totalBytes > 20 * 1024 * 1024) {
-    alert("Los adjuntos seleccionados superan 20 MB en total. Reduce el tamaño y reintenta.");
+    toast("Los adjuntos seleccionados superan 20 MB en total. Reduce el tamaño y reintenta.", "warning");
     return [];
   }
   for (const f of pendingFiles) {
     if ((f.size || 0) > 10 * 1024 * 1024) {
-      alert(`El archivo "${f.name}" supera 10 MB. Reduce el tamaño y reintenta.`);
+      toast(`El archivo "${f.name}" supera 10 MB. Reduce el tamaño y reintenta.`, "warning");
       return [];
     }
   }
@@ -2493,7 +2632,7 @@ function formatDMYHM(d) {
 // ========== EXPORT XLSX ==========
 function exportXLSX() {
   if (!window.XLSX) {
-    alert("No se pudo cargar la librería XLSX.");
+    toast("No se pudo cargar la librería XLSX.", "error");
     return;
   }
 
@@ -2667,7 +2806,7 @@ function notifyByEmail(taskId) {
 
   const to = String(t.responsableEmail || "").trim();
   if (!to) {
-    alert("Esta tarea no tiene Responsable (correo) asignado.");
+    toast("Esta tarea no tiene Responsable (correo) asignado.", "warning");
     return;
   }
 
@@ -2734,7 +2873,7 @@ function notifyByEmail(taskId) {
 function notifyByEmailDraft(d) {
   const to = String(d.responsableEmail || "").trim();
   if (!to) {
-    alert("No se puede notificar: falta Responsable (correo).");
+    toast("No se puede notificar: falta Responsable (correo).", "warning");
     return;
   }
 
@@ -2822,9 +2961,16 @@ function focusSearchHotkey() {
 // ========== INICIALIZACIÓN ==========
 // Nota: La función gs() está definida en utils.js
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   cacheDOM();
   initDuePicker();
   wireUI();
+  initSidebar();
   focusSearchHotkey();
+
+  // Dark mode toggle
+  const btnTheme = document.getElementById("btnTheme");
+  if (btnTheme) btnTheme.addEventListener("click", toggleTheme);
+
   bootstrap();
 });

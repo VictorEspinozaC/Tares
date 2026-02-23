@@ -4,13 +4,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tablero Tareas</title>
+  <meta name="theme-color" content="#2f7cff" />
+  <meta name="description" content="Gestiona tareas y equipos de trabajo con tablero Kanban" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Tares" />
+  <title>Tares - Tablero de Tareas</title>
 
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.svg" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
+  <a href="#boardEl" class="skip-link">Ir al contenido principal</a>
+  <div class="toast-container" id="toastContainer"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <header>
     <div class="topbar">
       <div class="brand">
@@ -22,6 +33,7 @@
       </div>
 
       <div class="controls">
+        <button class="sidebar-toggle" id="btnSidebarToggle" type="button" aria-label="Abrir menu lateral">&#9776;</button>
         <div class="segmented" title="Cambiar vista">
           <button id="btnViewBoard" class="active" type="button">Tablero</button>
           <button id="btnViewTable" type="button">Tabla</button>
@@ -30,7 +42,7 @@
 
         <div class="search" title="Buscar por ID, nombre, responsable, descripción o campos personalizados">
           <span style="color:var(--muted); font-weight:900;">⌕</span>
-          <input id="search" type="text" placeholder="Buscar tarea o campos personalizados…" />
+          <input id="search" type="text" placeholder="Buscar tarea o campos personalizados…" aria-label="Buscar tareas" />
           <span class="hint">Ctrl + K</span>
         </div>
 
@@ -38,6 +50,7 @@
             style="margin-left:6px;">0</span></button>
 
         <button id="btnNewTask" class="primary" type="button">+ Crear tarea</button>
+        <button class="theme-toggle" id="btnTheme" type="button" aria-label="Cambiar tema" title="Modo claro/oscuro">&#9790;</button>
         <button id="btnExport" class="secondary" type="button">Exportar Excel</button>
       </div>
     </div>
@@ -97,6 +110,12 @@
 
       <div class="bd">
         <div id="viewBoard">
+          <div id="loadingSkeleton" class="board">
+            <div class="col"><div class="col-hd"><div class="skeleton skeleton-line"></div></div><div class="dropzone"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div></div>
+            <div class="col"><div class="col-hd"><div class="skeleton skeleton-line"></div></div><div class="dropzone"><div class="skeleton skeleton-card"></div></div></div>
+            <div class="col"><div class="col-hd"><div class="skeleton skeleton-line"></div></div><div class="dropzone"><div class="skeleton skeleton-card"></div></div></div>
+            <div class="col"><div class="col-hd"><div class="skeleton skeleton-line"></div></div><div class="dropzone"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div></div>
+          </div>
           <div class="board" id="boardEl"></div>
         </div>
 
@@ -668,6 +687,17 @@
   <script src="supabase-service.js"></script>
   <script src="utils.js"></script>
   <script src="app.js"></script>
+
+  <script>
+    // Registrar Service Worker para PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch((err) => {
+          console.log("SW registration failed:", err);
+        });
+      });
+    }
+  </script>
 </body>
 
 </html>
